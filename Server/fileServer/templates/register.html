@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script type="text/javascript" src="/static/js/jquery-3.3.1.min.js"></script>
+{#    <script src="static/js/jquery-3.3.1.min.js"></script>#}
+    <script src="/static/jssrc/des.js"></script>
+    <script src="/static/jssrc/sm4.js"></script>
+    <script src="/static/jssrc/index.js"></script>
+    <title>Title</title>
+</head>
+<body style="background:url(/static/image/background.jpg);text-align: center">
+<div style="width: 1000px;height:200px"></div>
+<div style="margin-left: auto;margin-right:auto;width: 300px">
+    <p style="color: white">用户名</p><input id="accountOfRegister" type="text"/>
+    <p style="color: white">密  码</p><input id="passwordOfRegister" type="password"/>
+    <p style="color: white">重复密码</p><input id="rePasswordOfRegister" type="password"/><br>
+    <div style="margin-top: 20px">
+        <button id="registerSubmit" type="button"  style="width: 170px; height:30px;color:white;background: black">确定</button>
+        <button id="registerGoBack" type="button"  style="margin-top: 20px;width: 170px; height:30px;color:white;background: black">返回</button>
+    </div>
+</div>
+<script>
+    $("#registerGoBack").click(function(e){
+         $(window).attr("location","/");
+    });
+    $("#registerSubmit").bind("click",function () {
+        var account = $("#accountOfRegister").val();
+        var p1 = $("#passwordOfRegister").val();
+        var p2 = $("#rePasswordOfRegister").val();
+
+        if(account==""){
+            alert("用户名不能为空");
+            return false;
+        }
+        else if (p2!=p1){
+            alert("两次输入的密码不一样");
+            return false;
+        }else if(p2 == ""){
+            alert("密码不为空");
+        }else{
+
+            var password = p1;
+            password = password.toUpperCase();
+            var tmpPassword = ""
+            fCode = 'F'.charCodeAt();
+            for(var i =0; i < password.length;i++){
+                var tmpChar = password.charAt(i);
+                if (tmpChar > 'F'){
+{#                    tmpChar = String.fromCharCode()#}
+                    var delNumber = (tmpChar.charCodeAt() - fCode - 1)%16;
+                    if (delNumber < 10){
+                        tmpChar = String.fromCharCode(delNumber + '0'.charCodeAt())
+                    }else{
+                        tmpChar = String.fromCharCode(delNumber - 10 + 'A'.charCodeAt())
+                    }
+                }
+                tmpPassword += tmpChar;
+            }
+            password = tmpPassword
+            var pLength = password.length;
+            if (pLength >32){
+                alert("密码长度请小于等于32位");
+                return false;
+            }else{
+                for (var i = pLength; i<=31;i++){
+                    password = password + '0'
+                }
+            }
+            var key  =  "";
+            var tmpAccount = account.toUpperCase();
+            for(var i =0; i < tmpAccount.length;i++){
+                var tmpChar = tmpAccount.charAt(i);
+                if (tmpChar > 'F'){
+{#                    tmpChar = String.fromCharCode()#}
+                    var delNumber = (tmpChar.charCodeAt() - fCode - 1)%16;
+                    if (delNumber < 10){
+                        tmpChar = String.fromCharCode(delNumber + '0'.charCodeAt())
+                    }else{
+                        tmpChar = String.fromCharCode(delNumber - 10 + 'A'.charCodeAt())
+                    }
+                }
+                key += tmpChar;
+            }
+            if(key.length>32){
+                key = key.substr(0,32);
+            }else{
+                for(var i = key.length;i<=31;i++){
+                    key += '0';
+                }
+            }
+            password = (softcrypt.CalSM4(password,1,key));
+            $.post("/registerBehavior/",
+                {
+                    account:account,
+                    password:password
+                },
+                function (data,status) {
+                if (data == "200"){
+                    alert("注册成功！");
+                    $(window).attr("location","/");
+                }
+                else if(data="444"){
+                    alert("该账户已被注册");
+                }
+            })
+        }
+    });
+
+</script>
+</body>
+</html>

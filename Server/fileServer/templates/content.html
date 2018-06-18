@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <script type="text/javascript" src="/static/js/jquery-3.3.1.min.js"></script>
+    <script src="/static/js/core.js"></script>
+    <script src="/static/js/cipher-core.js"></script>
+    <script language="JavaScript" type="text/javascript" src="/static/js/jsbn.js"></script>
+    <script language="JavaScript" type="text/javascript" src="/static/js/jsbn2.js"></script>
+    <script language="JavaScript" type="text/javascript" src="/static/js/sm3.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/css/content.css">
+    <title>文件上传加密系统</title>
+</head>
+<body style="text-align: center">
+
+
+<div id="nav">
+    <div id="showDownload">下载</div>
+    <div id="showUpload" style="margin-top: 70px">上传</div>
+    <div id="logout" style="margin-top: 140px">注销</div>
+</div>
+<div id="contentDownload">
+     <div style="height: 200px;width: 100%"></div>
+    <h1>文件下载码</h1>
+    <input id="fileCode" type="text"><br>
+    <button id="downloadButton" style="margin-top: 20px;background: black;border: 0px;border-radius: 3px;width: 100px;height:30px;color:white">搜索</button>
+    <div id="downloadResult" style="margin-top: 20px"></div>
+</div>
+<div id="contentUpload">
+    <div style="height: 120px;width: 100%"></div>
+    <h2>文件</h2>
+    <div id="fileUploadBox">
+        <input id="fileUpload" type="file"><br>
+    </div>
+    <h2>sm3加密码</h2>
+        <input id="haxCode" type="text" style="width: 600px" disabled="disabled"><br>
+<button id="uploadButton" style="margin-top: 20px;background: black;border: 0px;border-radius: 3px;width: 100px;height:30px;color:white">上传</button>
+<div id="codeBox" style="margin-top: 20px"></div>
+</div>
+<script>
+    $("#logout").click(function(){
+        $(window).attr("location","/")
+    })
+
+    $("#showDownload").click(function(){
+        $("#contentDownload").fadeIn();
+        $("#contentUpload").hide();
+    });
+
+    $("#showUpload").click(function(){
+       $("#contentUpload").fadeIn();
+       $("#contentDownload").hide();
+    });
+
+    $("#showUpload").click();
+
+    $("#downloadButton").click(function(e){
+        $("#downloadResult").html("正在搜索");
+        var code = $("#fileCode").val();
+        if (code==""){
+            alert("文件码不能为空");
+            return false;
+        }
+        $.post("/downloadFile/",{
+            code:code
+        },
+        function (data,status) {
+            if(data=="404"){
+                alert("没有该文件");
+                $("#downloadResult").html("没有该文件");
+                return false;
+            }
+
+            var hashHex = data.hashHex;
+            var link = "<a href='"+data.url+"' download='"+data.url+"' >下载</a><br>";
+            $("#downloadResult").html(link);
+            $("#downloadResult").append("加密码 : "+hashHex);
+        })
+    });
+    function strToBinary(str){
+        var result = [];
+        var list = str.split("");
+        for(var i=0;i<list.length;i++){
+            var item = list[i];
+            var binaryStr = item.charCodeAt().toString(2);
+            result.push(binaryStr);
+        }
+        return result.join("");
+    }
+    $("#fileUpload").change(function(){
+        var file = this.files[0];
+        var reader = new FileReader();
+        $("#codeBox").html("正在加密。。。。。。");
+        reader.readAsBinaryString(file);
+        reader.onload = function (e) {
+            console.log();
+{#            console.log(this.result);#}
+            var msgData = CryptoJS.enc.Utf8.parse(strToBinary(this.result));
+{#            console.log(msgData);#}
+            var md;
+		    var sm3keycur = new SM3Digest();
+	    	msgData = sm3keycur.GetWords(msgData.toString());
+		    sm3keycur.BlockUpdate(msgData, 0, msgData.length);
+		    var c3 = new Array(32);
+		    sm3keycur.DoFinal(c3, 0);
+		    var hashHex = sm3keycur.GetHex(c3).toString().toUpperCase();
+		    $("#haxCode").val(hashHex);
+		    $("#codeBox").html("加密完成");
+        }
+    });
+
+    $("#uploadButton").click(function(){
+        if( $("#fileUpload").val() ==""){
+            alert("请选择文件");
+            return false;
+        }else if($("#haxCode").val() == ""){
+            alert("正在加密");
+            return false;
+        }
+        var formData = new FormData();
+        var file = $("#fileUpload")[0].files[0];
+        formData.append('file',file);
+        formData.append('haxhHex', $("#haxCode").val());
+        $("#codeBox").html("上传中。。。。。。")
+        $.ajax({
+            url:"/saveFile/",
+            type:'POST',
+            async:false,
+            data:formData,
+            processData:false,
+            contentType:false,
+            success:function (data,status) {
+                if (data == '444'){
+                    alert('文件已损失或不完整');
+                }else{
+                    $("#codeBox").html("文件下载码 : "+data);
+                }
+            }
+        });
+    });
+</script>
+</body>
+</html>

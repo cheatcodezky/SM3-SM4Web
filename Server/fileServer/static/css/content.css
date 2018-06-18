@@ -1,0 +1,39 @@
+#nav div{
+    color:white;
+    text-align: center;
+    position: fixed;
+    width: 60px;
+    height: 30px;
+    left: 0px;
+    top:150px;
+    border-bottom-right-radius: 10px;
+    border-top-right-radius: 10px;
+    background: black;
+}
+
+#fileUpload {
+    opacity: 0;
+    width:200px;
+    height: 100px;
+    -ms-filter: 'alpha(opacity=0)';
+}
+
+#fileUploadBox{
+    opacity: 0.5;
+    background:url("/static/image/uploadButton.png") no-repeat;
+    width:300px;
+    margin-left: auto;
+    margin-right: auto;
+    height:100px;
+    background-size:100% 100%;
+}
+
+#fileUploadBox:hover{
+    opacity: 1.0;
+    background:url("/static/image/uploadButton.png") no-repeat;
+    width:300px;
+    height:100px;
+    margin-left: auto;
+    margin-right: auto;
+    background-size:100% 100%;
+}
